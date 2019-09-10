@@ -37,7 +37,7 @@ spec:
     - cat
     tty: true
   - name: kubectl
-    image: lachlanevenson/k8s-kubectl:v1.14.0 // use a version that matches your K8s version
+    image: lachlanevenson/k8s-kubectl:v1.14.6 // use a version that matches your K8s version
     command:
       - cat
     tty: true
@@ -52,7 +52,7 @@ spec:
   stages {
     stage('Build image') {
       steps {
-        container('docker') {
+        container('jnlp') {
           sh "docker build -t ${projectName}-${serviceName}:${branchName} ."
           sh "docker push ${projectName}-${serviceName}:${branchName}"
         }
