@@ -97,8 +97,8 @@ spec:
                  sh "cp /tmp/test.txt ${WORKSPACE}"
                  archiveArtifacts 'test.txt'
 
-                sh 'ls -l ${archiveFile}'
-                archiveArtifacts '${archiveFile}'
+                sh "ls -l ${archiveFile}"
+                archiveArtifacts "${archiveFile}"
 
               }
             }
