@@ -98,7 +98,9 @@ spec:
                  archiveArtifacts 'test.txt'
 
                 sh "ls -l ${archiveFile}"
-                archiveArtifacts "${archiveFile}"
+
+                sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+                archiveArtifacts "${archiveFlatName}"
 
               }
             }
