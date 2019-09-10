@@ -64,7 +64,7 @@ spec:
         script {
           sh 'git rev-parse HEAD > commit'
 
-          mageName = "${projectName}-${serviceName}"
+          imageName = "${projectName}-${serviceName}"
           version = readFile('commit').trim()
           tag = "${namespace}/${org}/${imageName}:${version}"
         }
@@ -84,9 +84,9 @@ spec:
           }
 
           echo "Extract the Archive File : ${archiveFile}"
-          sh "mkdir -p /Archive/`dirname $archiveFile` && docker run -v $PWD:/Archive --rm --entrypoint cp image:version ${archiveFile} /Archive/${archiveFile}"
+          sh "docker run -v $PWD:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/`basename $archiveFile`"
 
-          archiveArtifacts "/Archive/${archiveFile}"
+          archiveArtifacts "`basename $archiveFile`"
         }
       }
     }
