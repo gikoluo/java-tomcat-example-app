@@ -89,10 +89,14 @@ spec:
               """
 
             echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
-            def image = docker.image($tag)
-            image.inside {
-               archiveArtifacts ${archiveFile}
+
+            script {
+              def image = docker.image($tag)
+              image.inside {
+                 archiveArtifacts ${archiveFile}
+              }
             }
+
             // sh """
             //   #docker run -v /tmp:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}
 
