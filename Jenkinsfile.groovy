@@ -94,6 +94,8 @@ spec:
               #docker run -v /tmp:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}
 
               docker run --rm --entrypoint cat ${tag} ${archiveFile} > /tmp/${archiveFlatName}
+
+              ls -l /tmp
               """
 
             archiveArtifacts artifacts: "/tmp/${archiveFlatName}", fingerprint: true
