@@ -92,7 +92,7 @@ spec:
           echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
           sh "docker run -v $PWD:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}"
 
-          archiveArtifacts "${archiveFlatName}"
+          archiveArtifacts "$PWD/${archiveFlatName}"
         }
       }
     }
