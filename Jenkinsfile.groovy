@@ -8,6 +8,13 @@ def archiveFile = env.ARCHIVE_FILE
 def branchName
 def hubCredential=env.HUB_CREDENTIAL
 
+
+def namespace = "swr.cn-east-2.myhuaweicloud.com"
+def org = "greenland"
+def imageName
+def version 
+def tag
+
 pipeline {
   agent {
     kubernetes {
@@ -56,14 +63,13 @@ spec:
       steps {
         script {
           sh 'git rev-parse HEAD > commit'
-          branchName = readFile('commit').trim()
+
+          mageName = "${projectName}-${serviceName}"
+          version = readFile('commit').trim()
+          tag = "${namespace}/${org}/${imageName}:${version}"
         }
-        def namespace = "swr.cn-east-2.myhuaweicloud.com"
-        def org = "greenland"
-        def imageName = "${projectName}-${serviceName}"
-        def version = "${branchName}"
-        def tag = "${namespace}/${org}/${imageName}:$version"
         
+
         container('docker') {
           withCredentials([[$class: 'UsernamePasswordMultiBinding',
             credentialsId: "${hubCredential}",
