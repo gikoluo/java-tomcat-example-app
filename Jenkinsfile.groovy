@@ -85,14 +85,16 @@ spec:
               docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
 
               docker build -t ${tag} . && \
+              docker run -v /tmp:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName} && \
               docker push ${tag}
+              ls -l /tmp
               """
+            echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
+
+            archiveArtifacts artifacts: "/tmp/${archiveFlatName}", fingerprint: true
           }
 
-          echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
-          sh "docker run -v .:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}; ls -l .; pwd"
-
-          archiveArtifacts artifacts: "/tmp/${archiveFlatName}", fingerprint: true
+          
         }
       }
     }
