@@ -88,17 +88,20 @@ spec:
               docker push ${tag}
               """
 
-
             echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
-            sh """
-              #docker run -v /tmp:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}
+            def image = docker.image($tag)
+            image.inside {
+               archiveArtifacts ${archiveFile}
+            }
+            // sh """
+            //   #docker run -v /tmp:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}
 
-              docker run --rm --entrypoint cat ${tag} ${archiveFile} > /tmp/${archiveFlatName}
+            //   docker run --rm --entrypoint cat ${tag} ${archiveFile} > /tmp/${archiveFlatName}
 
-              ls -l /tmp
-              """
+            //   ls -l /tmp
+            //   """
 
-            archiveArtifacts artifacts: "/tmp/${archiveFlatName}", fingerprint: true
+            // archiveArtifacts artifacts: "/tmp/${archiveFlatName}"
           }
 
           
