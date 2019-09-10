@@ -85,11 +85,21 @@ spec:
               docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
 
               docker build -t ${tag} . && \
-              docker run -v /tmp:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName} && \
               docker push ${tag}
-              ls -l /tmp
               """
+
+
             echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
+            sh """
+              docker run -v /tmp:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}
+
+              docker run --rm --entrypoint cat ${tag} ${archiveFile} > ${archiveFlatName}.2
+
+              ls -l /tmp
+              ls -l .
+              """
+
+            && \
 
             archiveArtifacts artifacts: "/tmp/${archiveFlatName}", fingerprint: true
           }
@@ -98,6 +108,7 @@ spec:
         }
       }
     }
+docker copy basetomcat8:latest /usr/local/tomcat/conf/server.xml /tmp/server.xml
 
     stage('Deploy') {
       steps {
