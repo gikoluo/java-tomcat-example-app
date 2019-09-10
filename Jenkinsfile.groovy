@@ -4,7 +4,7 @@
 def projectName = env.PROJECT_NAME   //Project name, Usually it is the name of jenkins project folder name.
 def serviceName = env.SERVICE_NAME   //Service name. Usually it is the process name running in the server.
 //def branchName = env.BRANCH_NAME     //Branch name. And the project must be multibranch pipeline, Or set the env in config
-def branch = ${BRANCH_NAME}
+def branchName = BRANCH_NAME
 
 
 pipeline {
