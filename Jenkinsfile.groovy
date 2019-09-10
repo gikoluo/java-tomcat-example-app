@@ -52,7 +52,7 @@ spec:
   stages {
     stage('Build image') {
       steps {
-        container('jnlp') {
+        container('docker') {
           sh "docker build -t ${projectName}-${serviceName}:${branchName} ."
           sh "docker push ${projectName}-${serviceName}:${branchName}"
         }
