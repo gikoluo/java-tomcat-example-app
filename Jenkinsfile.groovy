@@ -14,10 +14,7 @@ def org = "greenland"
 def imageName
 def version 
 def tag
-def archiveFlatName = sh (
-    script: "basename ${archiveFile}",
-    returnStdout: true
-).trim()
+def archiveFlatName 
 
 pipeline {
   agent {
@@ -71,6 +68,11 @@ spec:
           imageName = "${projectName}-${serviceName}"
           version = readFile('commit').trim()
           tag = "${namespace}/${org}/${imageName}:${version}"
+
+          archiveFlatName = sh (
+              script: "basename ${archiveFile}",
+              returnStdout: true
+          ).trim()
         }
         
 
