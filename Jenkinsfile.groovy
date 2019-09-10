@@ -93,7 +93,7 @@ spec:
             script {
               def image = docker.image("${tag}")
               image.inside {
-                 archiveArtifacts ${archiveFile}
+                 archiveArtifacts "${archiveFile}"
               }
             }
 
