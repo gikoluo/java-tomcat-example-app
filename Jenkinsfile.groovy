@@ -93,30 +93,11 @@ spec:
             script {
               def image = docker.image("${tag}")
               image.inside {
-                 sh 'date > /tmp/test.txt'
-                 sh "cp /tmp/test.txt ${WORKSPACE}"
-                 archiveArtifacts 'test.txt'
-
-                sh "ls -l ${archiveFile}"
-
                 sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
                 archiveArtifacts "${archiveFlatName}"
-
               }
             }
-
-            // sh """
-            //   #docker run -v /tmp:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}
-
-            //   docker run --rm --entrypoint cat ${tag} ${archiveFile} > /tmp/${archiveFlatName}
-
-            //   ls -l /tmp
-            //   """
-
-            // archiveArtifacts artifacts: "/tmp/${archiveFlatName}"
           }
-
-          
         }
       }
     }
