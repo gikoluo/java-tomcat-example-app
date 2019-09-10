@@ -4,7 +4,7 @@
 def projectName = env.PROJECT_NAME   //Project name, Usually it is the name of jenkins project folder name.
 def serviceName = env.SERVICE_NAME   //Service name. Usually it is the process name running in the server.
 //def branchName = env.BRANCH_NAME     //Branch name. And the project must be multibranch pipeline, Or set the env in config
-
+def branchName
 
 
 pipeline {
@@ -55,7 +55,7 @@ spec:
       steps {
         container('docker') {
           sh 'git rev-parse HEAD > commit'
-          def branchName = readFile('commit').trim()
+          branchName = readFile('commit').trim()
           sh "docker build -t ${projectName}-${serviceName}:${branchName} ."
           sh "docker push ${projectName}-${serviceName}:${branchName}"
         }
