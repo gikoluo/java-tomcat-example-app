@@ -3,9 +3,10 @@
 // Jenkinsfile
 def projectName = env.PROJECT_NAME   //Project name, Usually it is the name of jenkins project folder name.
 def serviceName = env.SERVICE_NAME   //Service name. Usually it is the process name running in the server.
+def archiveFile = env.ARCHIVE_FILE
 //def branchName = env.BRANCH_NAME     //Branch name. And the project must be multibranch pipeline, Or set the env in config
 def branchName
-
+def hubCredential=env.HUB_CREDENTIAL
 
 pipeline {
   agent {
@@ -58,8 +59,28 @@ spec:
           branchName = readFile('commit').trim()
         }
         container('docker') {
-          sh "docker build -t ${projectName}-${serviceName}:${branchName} ."
-          sh "docker push ${projectName}-${serviceName}:${branchName}"
+          def namespace = "swr.cn-east-2.myhuaweicloud.com"
+          def org = "greenland"
+          def imageName = "${projectName}-${serviceName}"
+          def version = "${branchName}"
+          def tag = "${namespace}/${org}/${imageName}:$version"
+
+          withCredentials([[$class: 'UsernamePasswordMultiBinding',
+            credentialsId: "${hubCredential}",
+            usernameVariable: 'DOCKER_HUB_USER',
+            passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+            sh """
+              docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+
+              docker build -t ${tag} . && \
+              docker push ${tag}
+              """
+          }
+
+          echo "Extract the Archive File : ${archiveFile}"
+          sh "mkdir -p /Archive/`dirname $archiveFile` && docker run -v $PWD:/Archive --rm --entrypoint cp image:version ${archiveFile} /Archive/${archiveFile}"
+
+          archiveArtifacts "/Archive/${archiveFile}"
         }
       }
     }
