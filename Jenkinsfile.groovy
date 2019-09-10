@@ -58,13 +58,13 @@ spec:
           sh 'git rev-parse HEAD > commit'
           branchName = readFile('commit').trim()
         }
+        def namespace = "swr.cn-east-2.myhuaweicloud.com"
+        def org = "greenland"
+        def imageName = "${projectName}-${serviceName}"
+        def version = "${branchName}"
+        def tag = "${namespace}/${org}/${imageName}:$version"
+        
         container('docker') {
-          def namespace = "swr.cn-east-2.myhuaweicloud.com"
-          def org = "greenland"
-          def imageName = "${projectName}-${serviceName}"
-          def version = "${branchName}"
-          def tag = "${namespace}/${org}/${imageName}:$version"
-
           withCredentials([[$class: 'UsernamePasswordMultiBinding',
             credentialsId: "${hubCredential}",
             usernameVariable: 'DOCKER_HUB_USER',
