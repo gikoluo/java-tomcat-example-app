@@ -90,7 +90,7 @@ spec:
           }
 
           echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
-          sh "docker run -v /tmp:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}; ls -l /tmp/; pwd"
+          sh "docker run -v .:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}; ls -l .; pwd"
 
           archiveArtifacts artifacts: "/tmp/${archiveFlatName}", fingerprint: true
         }
