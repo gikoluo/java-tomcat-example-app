@@ -14,6 +14,10 @@ def org = "greenland"
 def imageName
 def version 
 def tag
+def archiveFlatName = sh (
+    script: "basename ${archiveFile}",
+    returnStdout: true
+).trim()
 
 pipeline {
   agent {
@@ -83,10 +87,10 @@ spec:
               """
           }
 
-          echo "Extract the Archive File : ${archiveFile}"
-          sh "docker run -v $PWD:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/`basename $archiveFile`"
+          echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
+          sh "docker run -v $PWD:/Archive --rm --entrypoint cp ${tag} ${archiveFile} /Archive/${archiveFlatName}"
 
-          archiveArtifacts "`basename $archiveFile`"
+          archiveArtifacts "${archiveFlatName}"
         }
       }
     }
