@@ -54,8 +54,10 @@ spec:
     stage('Build image') {
       steps {
         container('docker') {
-          sh 'git rev-parse HEAD > commit'
-          branchName = readFile('commit').trim()
+          script {
+            sh 'git rev-parse HEAD > commit'
+            branchName = readFile('commit').trim()
+          }
           sh "docker build -t ${projectName}-${serviceName}:${branchName} ."
           sh "docker push ${projectName}-${serviceName}:${branchName}"
         }
