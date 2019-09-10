@@ -99,8 +99,6 @@ spec:
               ls -l .
               """
 
-            && \
-
             archiveArtifacts artifacts: "/tmp/${archiveFlatName}", fingerprint: true
           }
 
