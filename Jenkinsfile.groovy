@@ -106,7 +106,6 @@ spec:
         }
       }
     }
-docker copy basetomcat8:latest /usr/local/tomcat/conf/server.xml /tmp/server.xml
 
     stage('Deploy') {
       steps {
