@@ -91,7 +91,7 @@ spec:
             echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
 
             script {
-              def image = docker.image($tag)
+              def image = docker.image("${tag}")
               image.inside {
                  archiveArtifacts ${archiveFile}
               }
