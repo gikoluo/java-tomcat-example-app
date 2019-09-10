@@ -37,7 +37,7 @@ spec:
     - cat
     tty: true
   - name: kubectl
-    image: lachlanevenson/k8s-kubectl:v1.14.6 // use a version that matches your K8s version
+    image: lachlanevenson/k8s-kubectl:v1.14.6
     command:
       - cat
     tty: true
