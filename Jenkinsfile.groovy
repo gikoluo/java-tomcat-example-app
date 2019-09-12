@@ -104,8 +104,42 @@ spec:
 
     stage('Deploy') {
       steps {
+
+        script {
+          
+          tag_uat = "${namespace}/${org}/${imageName}:uat"
+
+        }
+
+        container('docker') {
+          withCredentials([[$class: 'UsernamePasswordMultiBinding',
+            credentialsId: "${hubCredential}",
+            usernameVariable: 'DOCKER_HUB_USER',
+            passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+            sh """
+              docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+              docker tag ${tag} ${tag_uat}
+              docker push ${tag_uat}
+              """
+
+            script {
+              tag_uat = "${namespace}/${org}/${imageName}:uat"
+
+              def image = docker.image("${tag}")
+              image.inside {
+                sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+                archiveArtifacts "${archiveFlatName}"
+              }
+            }
+          }
+        }
+
         container('kubectl') {
-            sh "kubectl version"
+          withKubeConfig([credentialsId: 'kubeconfig-uat']) {
+            sh 'kubectl get namespaces'
+            sh 'kubectl apply -f ./kubernetes/deployment.yaml'
+          }
+          //  sh "kubectl version"
           // sh "kubectl delete -f ./kubernetes/deployment.yaml"
           // sh "kubectl apply -f ./kubernetes/deployment.yaml"
           // sh "kubectl apply -f ./kubernetes/service.yaml"

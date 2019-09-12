@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-helloworld-deployment
+  labels:
+    app: tomcat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tomcat
+  template:
+    metadata:
+      labels:
+        app: tomcat
+    spec:
+      containers:
+      - name: tomcat
+        image: swr.cn-east-2.myhuaweicloud.com/greenland/sample-hellotomcat:uat
+        ports:
+        - containerPort: 8080
