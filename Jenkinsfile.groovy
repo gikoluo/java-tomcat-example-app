@@ -112,26 +112,30 @@ spec:
         }
 
         container('docker') {
-          withCredentials([[$class: 'UsernamePasswordMultiBinding',
-            credentialsId: "${hubCredential}",
-            usernameVariable: 'DOCKER_HUB_USER',
-            passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
-            sh """
-              docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+          sh """
               docker tag ${tag} ${tag_uat}
               docker push ${tag_uat}
               """
+          // withCredentials([[$class: 'UsernamePasswordMultiBinding',
+          //   credentialsId: "${hubCredential}",
+          //   usernameVariable: 'DOCKER_HUB_USER',
+          //   passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+          //   sh """
+          //     docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+          //     docker tag ${tag} ${tag_uat}
+          //     docker push ${tag_uat}
+          //     """
 
-            script {
-              tag_uat = "${namespace}/${org}/${imageName}:uat"
+          //   script {
+          //     tag_uat = "${namespace}/${org}/${imageName}:uat"
 
-              def image = docker.image("${tag}")
-              image.inside {
-                sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
-                archiveArtifacts "${archiveFlatName}"
-              }
-            }
-          }
+          //     def image = docker.image("${tag}")
+          //     image.inside {
+          //       sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+          //       archiveArtifacts "${archiveFlatName}"
+          //     }
+          //   }
+          // }
         }
 
         container('kubectl') {
