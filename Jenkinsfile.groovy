@@ -7,7 +7,7 @@ def archiveFile = env.ARCHIVE_FILE
 //def branchName = env.BRANCH_NAME     //Branch name. And the project must be multibranch pipeline, Or set the env in config
 def branchName
 def hubCredential=env.HUB_CREDENTIAL
-
+def k8sNS=env.K8S_NAMESPACE
 
 def namespace = "swr.cn-east-2.myhuaweicloud.com"
 def org = "greenland"
@@ -102,13 +102,10 @@ spec:
       }
     }
 
-    stage('Deploy') {
+    stage('Deploy To UAT') {
       steps {
-
         script {
-          
           tag_uat = "${namespace}/${org}/${imageName}:uat"
-
         }
 
         container('docker') {
@@ -141,6 +138,7 @@ spec:
         container('kubectl') {
           withKubeConfig([credentialsId: 'kubeconfig-uat']) {
             sh 'kubectl get namespaces'
+            sh "kubectl config set-context --current --namespace=${k8sNS}-uat"
             sh 'kubectl apply -f ./kubernetes/deployment.yaml'
           }
           //  sh "kubectl version"
@@ -150,5 +148,53 @@ spec:
         }
       }
     }
+
+
+    stage('Deploy To Production') {
+      steps {
+        script {
+          tag_prod = "${namespace}/${org}/${imageName}:prod"
+        }
+
+        container('docker') {
+          sh """
+              docker tag ${tag_uat} ${tag_prod}
+              docker push ${tag_prod}
+              """
+          // withCredentials([[$class: 'UsernamePasswordMultiBinding',
+          //   credentialsId: "${hubCredential}",
+          //   usernameVariable: 'DOCKER_HUB_USER',
+          //   passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+          //   sh """
+          //     docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+          //     docker tag ${tag} ${tag_uat}
+          //     docker push ${tag_uat}
+          //     """
+
+          //   script {
+          //     tag_uat = "${namespace}/${org}/${imageName}:uat"
+
+          //     def image = docker.image("${tag}")
+          //     image.inside {
+          //       sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+          //       archiveArtifacts "${archiveFlatName}"
+          //     }
+          //   }
+          // }
+        }
+
+        // container('kubectl') {
+        //   withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+        //     sh 'kubectl get namespaces'
+        //     sh 'kubectl apply -f ./kubernetes/deployment.yaml'
+        //   }
+        //   //  sh "kubectl version"
+        //   // sh "kubectl delete -f ./kubernetes/deployment.yaml"
+        //   // sh "kubectl apply -f ./kubernetes/deployment.yaml"
+        //   // sh "kubectl apply -f ./kubernetes/service.yaml"
+        // }
+      }
+    }
+
   }
 }
