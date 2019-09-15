@@ -58,191 +58,149 @@ spec:
 """
     }
 
+    stages {
+      stage('Init') {
+        steps {
+          container('docker') {
+            withCredentials([[$class: 'UsernamePasswordMultiBinding',
+              credentialsId: "${hubCredential}",
+              usernameVariable: 'DOCKER_HUB_USER',
+              passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+              sh """
+                docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+                """
+            }
+          }
 
-  stages {
-    stage('Init') {
-      steps {
-        container('docker') {
-          withCredentials([[$class: 'UsernamePasswordMultiBinding',
-            credentialsId: "${hubCredential}",
-            usernameVariable: 'DOCKER_HUB_USER',
-            passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
-            sh """
-              docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
-              """
+          script {
+            sh 'git rev-parse HEAD > commit'
+
+            imageName = "${projectName}-${serviceName}"
+            version = readFile('commit').trim()
+            tag = "${namespace}/${org}/${imageName}"
+
+            archiveFlatName = sh (
+                script: "basename ${archiveFile}",
+                returnStdout: true
+            ).trim()
           }
         }
-
-        script {
-          sh 'git rev-parse HEAD > commit'
-
-          imageName = "${projectName}-${serviceName}"
-          version = readFile('commit').trim()
-          tag = "${namespace}/${org}/${imageName}"
-
-          archiveFlatName = sh (
-              script: "basename ${archiveFile}",
-              returnStdout: true
-          ).trim()
-        }
       }
-    }
 
-
-    stage('Build image') {
-      steps {
-        container('docker') {
+      stage('Build image') {
+        steps {
+          container('docker') {
             sh """
-              docker build -t ${tag}:${version} . && \
+              docker build -t ${tag} . && \
               docker push ${tag}
               """
-        }
-      }
-    }
 
-    stage('QA') {
-      steps {
-        container('docker') {
-          echo "Run Sonar Analytics"
+            echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
 
-          sh """
-            docker build --target sonarqube -t ${tag}:sonarqube . 
-            """
-
-          //sonar-scanner
-//           docker run -ti -v $(pwd):/root/src --link sonarqube mitch/sonarscanner sonar-scanner \
-// -Dsonar.host.url=http://sonarqube:9000 \
-// -Dsonar.jdbc.url=jdbc:h2:tcp://sonarqube/sonar \
-// -Dsonar.projectKey=MyProjectKey \
-// -Dsonar.projectName="My Project Name" \
-// -Dsonar.projectVersion=1 \
-// -Dsonar.projectBaseDir=/root \
-// -Dsonar.sources=./src
-
-          docker {
-              image '${tag}:sonarqube'
-          }
-
-          script {
-            def image = docker.image("${tag}")
-            image.inside {
-              sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
-              archiveArtifacts "${archiveFlatName}"
+            script {
+              def image = docker.image("${tag}")
+              image.inside {
+                sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+                archiveArtifacts "${archiveFlatName}"
+              }
             }
           }
         }
       }
-    }
 
-    stage('Archive File') {
-      steps {
-        container('docker') {
-          echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
-
+      stage('Deploy To UAT') {
+        steps {
           script {
-            def image = docker.image("${tag}")
-            image.inside {
-              sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
-              archiveArtifacts "${archiveFlatName}"
+            tag_uat = "${namespace}/${org}/${imageName}:uat"
+          }
+
+          container('docker') {
+            sh """
+                docker tag ${tag} ${tag_uat}
+                docker push ${tag_uat}
+                """
+            // withCredentials([[$class: 'UsernamePasswordMultiBinding',
+            //   credentialsId: "${hubCredential}",
+            //   usernameVariable: 'DOCKER_HUB_USER',
+            //   passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+            //   sh """
+            //     docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+            //     docker tag ${tag} ${tag_uat}
+            //     docker push ${tag_uat}
+            //     """
+
+            //   script {
+            //     tag_uat = "${namespace}/${org}/${imageName}:uat"
+
+            //     def image = docker.image("${tag}")
+            //     image.inside {
+            //       sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+            //       archiveArtifacts "${archiveFlatName}"
+            //     }
+            //   }
+            // }
+          }
+
+          container('kubectl') {
+            withKubeConfig([credentialsId: 'kubeconfig-uat']) {
+              sh 'kubectl get namespaces'
+              sh "kubectl config set-context --current --namespace=${k8sNS}-uat"
+              sh 'kubectl apply -f ./kubernetes/deployment.yaml'
             }
+            //  sh "kubectl version"
+            // sh "kubectl delete -f ./kubernetes/deployment.yaml"
+            // sh "kubectl apply -f ./kubernetes/deployment.yaml"
+            // sh "kubectl apply -f ./kubernetes/service.yaml"
           }
         }
       }
-    }
-  }
 
 
-    stage('Deploy To UAT') {
-      steps {
-
-        container('docker') {
-          sh """
-              docker tag ${tag}:${version} ${tag}:uat
-              docker push ${tag_uat}:uat
-              """
-          // withCredentials([[$class: 'UsernamePasswordMultiBinding',
-          //   credentialsId: "${hubCredential}",
-          //   usernameVariable: 'DOCKER_HUB_USER',
-          //   passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
-          //   sh """
-          //     docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
-          //     docker tag ${tag} ${tag_uat}
-          //     docker push ${tag_uat}
-          //     """
-
-          //   script {
-          //     tag_uat = "${namespace}/${org}/${imageName}:uat"
-
-          //     def image = docker.image("${tag}")
-          //     image.inside {
-          //       sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
-          //       archiveArtifacts "${archiveFlatName}"
-          //     }
-          //   }
-          // }
-        }
-
-        container('kubectl') {
-          withKubeConfig([credentialsId: 'kubeconfig-uat']) {
-            sh 'kubectl get namespaces'
-            sh "kubectl config set-context --current --namespace=${k8sNS}-uat"
-            sh 'kubectl apply -f ./kubernetes/deployment.yaml'
+      stage('Deploy To Production') {
+        steps {
+          script {
+            tag_prod = "${namespace}/${org}/${imageName}:prod"
           }
-          //  sh "kubectl version"
-          // sh "kubectl delete -f ./kubernetes/deployment.yaml"
-          // sh "kubectl apply -f ./kubernetes/deployment.yaml"
-          // sh "kubectl apply -f ./kubernetes/service.yaml"
-        }
-      }
-    }
 
+          container('docker') {
+            sh """
+                docker tag ${tag_uat} ${tag_prod}
+                docker push ${tag_prod}
+                """
+            // withCredentials([[$class: 'UsernamePasswordMultiBinding',
+            //   credentialsId: "${hubCredential}",
+            //   usernameVariable: 'DOCKER_HUB_USER',
+            //   passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+            //   sh """
+            //     docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+            //     docker tag ${tag} ${tag_uat}
+            //     docker push ${tag_uat}
+            //     """
 
-    stage('Deploy To Production') {
-      steps {
-        script {
-          tag_prod = "${namespace}/${org}/${imageName}:prod"
-        }
+            //   script {
+            //     tag_uat = "${namespace}/${org}/${imageName}:uat"
 
-        container('docker') {
-          sh """
-              docker tag ${tag}:uat ${tag_prod}:prod
-              docker push ${tag}:prod
-              """
-          // withCredentials([[$class: 'UsernamePasswordMultiBinding',
-          //   credentialsId: "${hubCredential}",
-          //   usernameVariable: 'DOCKER_HUB_USER',
-          //   passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
-          //   sh """
-          //     docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
-          //     docker tag ${tag} ${tag_uat}
-          //     docker push ${tag_uat}
-          //     """
+            //     def image = docker.image("${tag}")
+            //     image.inside {
+            //       sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+            //       archiveArtifacts "${archiveFlatName}"
+            //     }
+            //   }
+            // }
+          }
 
-          //   script {
-          //     tag_uat = "${namespace}/${org}/${imageName}:uat"
-
-          //     def image = docker.image("${tag}")
-          //     image.inside {
-          //       sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
-          //       archiveArtifacts "${archiveFlatName}"
-          //     }
+          // container('kubectl') {
+          //   withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+          //     sh 'kubectl get namespaces'
+          //     sh 'kubectl apply -f ./kubernetes/deployment.yaml'
           //   }
+          //   //  sh "kubectl version"
+          //   // sh "kubectl delete -f ./kubernetes/deployment.yaml"
+          //   // sh "kubectl apply -f ./kubernetes/deployment.yaml"
+          //   // sh "kubectl apply -f ./kubernetes/service.yaml"
           // }
         }
-
-        // container('kubectl') {
-        //   withKubeConfig([credentialsId: 'kubeconfig-prod']) {
-        //     sh 'kubectl get namespaces'
-        //     sh 'kubectl apply -f ./kubernetes/deployment.yaml'
-        //   }
-        //   //  sh "kubectl version"
-        //   // sh "kubectl delete -f ./kubernetes/deployment.yaml"
-        //   // sh "kubectl apply -f ./kubernetes/deployment.yaml"
-        //   // sh "kubectl apply -f ./kubernetes/service.yaml"
-        // }
       }
     }
-  }
   }
 }
-  }
