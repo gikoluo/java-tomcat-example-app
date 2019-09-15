@@ -102,16 +102,6 @@ spec:
             docker build -t ${tag}:${version} . && \
             docker push ${tag}:${version}
             """
-
-          echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
-
-          script {
-            def image = docker.image("${tag}")
-            image.inside {
-              sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
-              archiveArtifacts "${archiveFlatName}"
-            }
-          }
         }
       }
     }
@@ -125,9 +115,7 @@ spec:
             docker build --target sonarqube -t ${tag}:sonarqube . 
             """
 
-          docker {
-              image '${tag}:sonarqube'
-          }
+          docker.image("${tag}:sonarqube").withRun()
         }
       }
     }
