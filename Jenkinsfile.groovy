@@ -57,37 +57,86 @@ spec:
         path: /var/run/docker.sock
 """
     }
-  }
 
-  stages {
-    stage('Build image') {
-      steps {
-        script {
-          sh 'git rev-parse HEAD > commit'
-
-          imageName = "${projectName}-${serviceName}"
-          version = readFile('commit').trim()
-          tag = "${namespace}/${org}/${imageName}:${version}"
-
-          archiveFlatName = sh (
-              script: "basename ${archiveFile}",
-              returnStdout: true
-          ).trim()
-        }
-        
-
-        container('docker') {
+    container('docker') {
           withCredentials([[$class: 'UsernamePasswordMultiBinding',
             credentialsId: "${hubCredential}",
             usernameVariable: 'DOCKER_HUB_USER',
             passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
             sh """
               docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+              """
+          }
+    }
 
-              docker build -t ${tag} . && \
+    script {
+      sh 'git rev-parse HEAD > commit'
+
+      imageName = "${projectName}-${serviceName}"
+      version = readFile('commit').trim()
+      tag = "${namespace}/${org}/${imageName}"
+
+      archiveFlatName = sh (
+          script: "basename ${archiveFile}",
+          returnStdout: true
+      ).trim()
+    }
+  }
+
+
+
+  stages {
+    stage('Build image') {
+      steps {
+        container('docker') {
+            sh """
+              docker build -t ${tag}:${version} . && \
               docker push ${tag}
               """
+        }
+      }
+    }
 
+    stages {
+      stage('QA') {
+        steps {
+          container('docker') {
+            echo "Run Sonar Analytics"
+
+            sh """
+              docker build --target sonarqube -t ${tag}:sonarqube . 
+              """
+
+            //sonar-scanner
+  //           docker run -ti -v $(pwd):/root/src --link sonarqube mitch/sonarscanner sonar-scanner \
+  // -Dsonar.host.url=http://sonarqube:9000 \
+  // -Dsonar.jdbc.url=jdbc:h2:tcp://sonarqube/sonar \
+  // -Dsonar.projectKey=MyProjectKey \
+  // -Dsonar.projectName="My Project Name" \
+  // -Dsonar.projectVersion=1 \
+  // -Dsonar.projectBaseDir=/root \
+  // -Dsonar.sources=./src
+
+            docker {
+                image '${tag}:sonarqube'
+            }
+
+            script {
+              def image = docker.image("${tag}")
+              image.inside {
+                sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+                archiveArtifacts "${archiveFlatName}"
+              }
+            }
+          }
+        }
+      }
+    }
+
+    stages {
+      stage('Archive File') {
+        steps {
+          container('docker') {
             echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
 
             script {
@@ -102,16 +151,14 @@ spec:
       }
     }
 
+
     stage('Deploy To UAT') {
       steps {
-        script {
-          tag_uat = "${namespace}/${org}/${imageName}:uat"
-        }
 
         container('docker') {
           sh """
-              docker tag ${tag} ${tag_uat}
-              docker push ${tag_uat}
+              docker tag ${tag}:${version} ${tag}:uat
+              docker push ${tag_uat}:uat
               """
           // withCredentials([[$class: 'UsernamePasswordMultiBinding',
           //   credentialsId: "${hubCredential}",
@@ -158,8 +205,8 @@ spec:
 
         container('docker') {
           sh """
-              docker tag ${tag_uat} ${tag_prod}
-              docker push ${tag_prod}
+              docker tag ${tag}:uat ${tag_prod}:prod
+              docker push ${tag}:prod
               """
           // withCredentials([[$class: 'UsernamePasswordMultiBinding',
           //   credentialsId: "${hubCredential}",

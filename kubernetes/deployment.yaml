@@ -18,4 +18,4 @@ spec:
       - name: tomcat
         image: swr.cn-east-2.myhuaweicloud.com/greenland/sample-hellotomcat:uat
         ports:
-        - containerPort: 8080
+        - containerPort: 8000
