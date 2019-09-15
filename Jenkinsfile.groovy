@@ -73,6 +73,13 @@ spec:
           }
         }
 
+        container('kubectl') {
+          withKubeConfig([credentialsId: 'kubeconfig-uat']) {
+            sh 'kubectl get namespaces'
+            sh "kubectl config set-context --current --namespace=${k8sNS}-uat"
+          }
+        }
+
         script {
           sh 'git rev-parse HEAD > commit'
 
@@ -92,8 +99,8 @@ spec:
       steps {
         container('docker') {
           sh """
-            docker build -t ${tag} . && \
-            docker push ${tag}
+            docker build -t ${tag}:${version} . && \
+            docker push ${tag}:${version}
             """
 
           echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
@@ -109,16 +116,44 @@ spec:
       }
     }
 
+    stage('QA') {
+      steps {
+        container('docker') {
+          echo "Run Sonar Analytics"
+
+          sh """
+            docker build --target sonarqube -t ${tag}:sonarqube . 
+            """
+
+          docker {
+              image '${tag}:sonarqube'
+          }
+        }
+      }
+    }
+
+    stage('Archive File') {
+      steps {
+        container('docker') {
+          echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
+
+          script {
+            def image = docker.image("${tag}:${version}")
+            image.inside {
+              sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+              archiveArtifacts "${archiveFlatName}"
+            }
+          }
+        }
+      }
+    }
+
     stage('Deploy To UAT') {
       steps {
-        script {
-          tag_uat = "${namespace}/${org}/${imageName}:uat"
-        }
-
         container('docker') {
           sh """
-              docker tag ${tag} ${tag_uat}
-              docker push ${tag_uat}
+              docker tag ${tag}:${version} ${tag}:uat
+              docker push ${tag}:uat
               """
           // withCredentials([[$class: 'UsernamePasswordMultiBinding',
           //   credentialsId: "${hubCredential}",
@@ -143,11 +178,7 @@ spec:
         }
 
         container('kubectl') {
-          withKubeConfig([credentialsId: 'kubeconfig-uat']) {
-            sh 'kubectl get namespaces'
-            sh "kubectl config set-context --current --namespace=${k8sNS}-uat"
-            sh 'kubectl apply -f ./kubernetes/deployment.yaml'
-          }
+          sh 'kubectl apply -f ./kubernetes/deployment.yaml'
           //  sh "kubectl version"
           // sh "kubectl delete -f ./kubernetes/deployment.yaml"
           // sh "kubectl apply -f ./kubernetes/deployment.yaml"
