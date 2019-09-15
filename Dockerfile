@@ -14,8 +14,9 @@ RUN mvn compile war:war
 FROM nikhuber/sonar-scanner:latest as sonarqube
 WORKDIR /build
 COPY --from=build_stage /build/src /build
-RUN echo sonar.host.url=http://devops-sonarqube-sonarqube:9000 >> /opt/sonar-scanner-3.2.0.1227-linux/conf/sonar-scanner.properties
-CMD ["sonar-scanner", "-Dsonar.projectKey=sample:tomcat", "-Dsonar.sources=src"]
+RUN echo sonar.host.url=http://devops-sonarqube-sonarqube:9000 >> /opt/sonar-scanner-3.2.0.1227-linux/conf/sonar-scanner.properties && \
+    echo "sonar.projectKey=sample:tomcat" > sonar-project.properties && echo "sonar.sources=./src" >> sonar-project.properties
+CMD ["sonar-scanner"]
 
 
 # Step final: Application: Make a Tomcat container and run
