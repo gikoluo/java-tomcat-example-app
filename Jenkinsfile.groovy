@@ -121,7 +121,7 @@ spec:
 
           script {
             docker.image("${tag}:sonarqube"){
-
+              sh 'sonar-scanner'
             }
           }
         }
