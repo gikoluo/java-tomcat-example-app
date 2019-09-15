@@ -98,8 +98,10 @@ spec:
     stage('Build image') {
       steps {
         container('docker') {
-          def customImage = docker.build("${tag}:${version}")
-          customImage.push()
+          script {
+            def customImage = docker.build("${tag}:${version}")
+            customImage.push()
+          }
           // sh """
           //   docker build -t ${tag}:${version} . && \
           //   docker push ${tag}:${version}
