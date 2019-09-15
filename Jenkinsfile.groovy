@@ -110,12 +110,14 @@ spec:
       steps {
         container('docker') {
           echo "Run Sonar Analytics"
-
+          
           sh """
             docker build --target sonarqube -t ${tag}:sonarqube . 
             """
 
-          docker.image("${tag}:sonarqube").withRun()
+          script {
+            docker.image("${tag}:sonarqube").withRun()
+          }
         }
       }
     }
