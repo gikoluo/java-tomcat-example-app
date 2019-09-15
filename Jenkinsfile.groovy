@@ -56,38 +56,39 @@ spec:
       hostPath:
         path: /var/run/docker.sock
 """
-    }    
+    }
   }
 
-  steps {
-    container('docker') {
-      withCredentials([[$class: 'UsernamePasswordMultiBinding',
-        credentialsId: "${hubCredential}",
-        usernameVariable: 'DOCKER_HUB_USER',
-        passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
-        sh """
-          docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
-          """
+  stages {
+    stage('Init') {
+      steps {
+        container('docker') {
+          withCredentials([[$class: 'UsernamePasswordMultiBinding',
+            credentialsId: "${hubCredential}",
+            usernameVariable: 'DOCKER_HUB_USER',
+            passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+            sh """
+              docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+              """
+          }
+        }
+
+        script {
+          sh 'git rev-parse HEAD > commit'
+
+          imageName = "${projectName}-${serviceName}"
+          version = readFile('commit').trim()
+          tag = "${namespace}/${org}/${imageName}"
+
+          archiveFlatName = sh (
+              script: "basename ${archiveFile}",
+              returnStdout: true
+          ).trim()
+        }
       }
     }
 
-    script {
-      sh 'git rev-parse HEAD > commit'
 
-      imageName = "${projectName}-${serviceName}"
-      version = readFile('commit').trim()
-      tag = "${namespace}/${org}/${imageName}"
-
-      archiveFlatName = sh (
-          script: "basename ${archiveFile}",
-          returnStdout: true
-      ).trim()
-    }
-  }
-
-
-
-  stages {
     stage('Build image') {
       steps {
         container('docker') {
@@ -99,54 +100,50 @@ spec:
       }
     }
 
-    stages {
-      stage('QA') {
-        steps {
-          container('docker') {
-            echo "Run Sonar Analytics"
+    stage('QA') {
+      steps {
+        container('docker') {
+          echo "Run Sonar Analytics"
 
-            sh """
-              docker build --target sonarqube -t ${tag}:sonarqube . 
-              """
+          sh """
+            docker build --target sonarqube -t ${tag}:sonarqube . 
+            """
 
-            //sonar-scanner
-  //           docker run -ti -v $(pwd):/root/src --link sonarqube mitch/sonarscanner sonar-scanner \
-  // -Dsonar.host.url=http://sonarqube:9000 \
-  // -Dsonar.jdbc.url=jdbc:h2:tcp://sonarqube/sonar \
-  // -Dsonar.projectKey=MyProjectKey \
-  // -Dsonar.projectName="My Project Name" \
-  // -Dsonar.projectVersion=1 \
-  // -Dsonar.projectBaseDir=/root \
-  // -Dsonar.sources=./src
+          //sonar-scanner
+//           docker run -ti -v $(pwd):/root/src --link sonarqube mitch/sonarscanner sonar-scanner \
+// -Dsonar.host.url=http://sonarqube:9000 \
+// -Dsonar.jdbc.url=jdbc:h2:tcp://sonarqube/sonar \
+// -Dsonar.projectKey=MyProjectKey \
+// -Dsonar.projectName="My Project Name" \
+// -Dsonar.projectVersion=1 \
+// -Dsonar.projectBaseDir=/root \
+// -Dsonar.sources=./src
 
-            docker {
-                image '${tag}:sonarqube'
-            }
+          docker {
+              image '${tag}:sonarqube'
+          }
 
-            script {
-              def image = docker.image("${tag}")
-              image.inside {
-                sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
-                archiveArtifacts "${archiveFlatName}"
-              }
+          script {
+            def image = docker.image("${tag}")
+            image.inside {
+              sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+              archiveArtifacts "${archiveFlatName}"
             }
           }
         }
       }
     }
 
-    stages {
-      stage('Archive File') {
-        steps {
-          container('docker') {
-            echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
+    stage('Archive File') {
+      steps {
+        container('docker') {
+          echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
 
-            script {
-              def image = docker.image("${tag}")
-              image.inside {
-                sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
-                archiveArtifacts "${archiveFlatName}"
-              }
+          script {
+            def image = docker.image("${tag}")
+            image.inside {
+              sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
+              archiveArtifacts "${archiveFlatName}"
             }
           }
         }
@@ -244,6 +241,5 @@ spec:
         // }
       }
     }
-
   }
 }
