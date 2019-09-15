@@ -57,7 +57,7 @@ spec:
         path: /var/run/docker.sock
 """
     }
-  }
+
 
   stages {
     stage('Init') {
@@ -149,6 +149,7 @@ spec:
         }
       }
     }
+  }
 
 
     stage('Deploy To UAT') {
@@ -242,4 +243,6 @@ spec:
       }
     }
   }
+  }
 }
+  }
