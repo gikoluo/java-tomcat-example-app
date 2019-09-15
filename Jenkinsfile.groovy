@@ -56,31 +56,31 @@ spec:
       hostPath:
         path: /var/run/docker.sock
 """
+    }    
+  }
+
+  container('docker') {
+    withCredentials([[$class: 'UsernamePasswordMultiBinding',
+      credentialsId: "${hubCredential}",
+      usernameVariable: 'DOCKER_HUB_USER',
+      passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+      sh """
+        docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
+        """
     }
+  }
 
-    container('docker') {
-          withCredentials([[$class: 'UsernamePasswordMultiBinding',
-            credentialsId: "${hubCredential}",
-            usernameVariable: 'DOCKER_HUB_USER',
-            passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
-            sh """
-              docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD} ${namespace}
-              """
-          }
-    }
+  script {
+    sh 'git rev-parse HEAD > commit'
 
-    script {
-      sh 'git rev-parse HEAD > commit'
+    imageName = "${projectName}-${serviceName}"
+    version = readFile('commit').trim()
+    tag = "${namespace}/${org}/${imageName}"
 
-      imageName = "${projectName}-${serviceName}"
-      version = readFile('commit').trim()
-      tag = "${namespace}/${org}/${imageName}"
-
-      archiveFlatName = sh (
-          script: "basename ${archiveFile}",
-          returnStdout: true
-      ).trim()
-    }
+    archiveFlatName = sh (
+        script: "basename ${archiveFile}",
+        returnStdout: true
+    ).trim()
   }
 
 
