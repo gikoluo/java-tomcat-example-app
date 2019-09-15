@@ -120,8 +120,9 @@ spec:
             """
 
           script {
-            docker.image("${tag}:sonarqube"){
-              sh 'sonar-scanner'
+            def image = docker.image("${tag}:sonarqube")
+            image.inside {
+              sh "sonar-scanner"
             }
           }
         }
