@@ -98,10 +98,12 @@ spec:
     stage('Build image') {
       steps {
         container('docker') {
-          sh """
-            docker build -t ${tag}:${version} . && \
-            docker push ${tag}:${version}
-            """
+          def customImage = docker.build("${tag}:${version}")
+          customImage.push()
+          // sh """
+          //   docker build -t ${tag}:${version} . && \
+          //   docker push ${tag}:${version}
+          //   """
         }
       }
     }
@@ -110,13 +112,15 @@ spec:
       steps {
         container('docker') {
           echo "Run Sonar Analytics"
-          
+
           sh """
             docker build --target sonarqube -t ${tag}:sonarqube . 
             """
 
           script {
-            docker.image("${tag}:sonarqube").withRun()
+            docker.image("${tag}:sonarqube"){
+
+            }
           }
         }
       }
