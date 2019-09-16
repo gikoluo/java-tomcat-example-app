@@ -12,9 +12,9 @@ RUN mvn compile war:war
 # Step 2: Run Sonarqube scan
 # Gets Sonarqube Scanner from Dockerhub and runs it
 FROM newtmitch/sonar-scanner:4 as sonarqube
-WORKDIR /build
-COPY --from=build_stage /build/src src
-COPY sonar-project.properties .
+WORKDIR /root
+COPY --from=build_stage /build/src /root/src
+COPY sonar-project.properties /root/
 CMD ["sonar-scanner"]
 
 
