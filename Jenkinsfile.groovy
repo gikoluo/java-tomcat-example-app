@@ -197,14 +197,10 @@ spec:
 
     stage('Deploy To Production') {
       steps {
-        script {
-          tag_prod = "${namespace}/${org}/${imageName}:prod"
-        }
-
         container('docker') {
           sh """
-              docker tag ${tag_uat} ${tag_prod}
-              docker push ${tag_prod}
+              docker tag ${tag}:uat ${tag}:prod
+              docker push ${tag_prod}:prod
               """
           // withCredentials([[$class: 'UsernamePasswordMultiBinding',
           //   credentialsId: "${hubCredential}",
