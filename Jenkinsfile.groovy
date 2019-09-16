@@ -121,10 +121,10 @@ spec:
               //sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.6.0.1398:sonar'
               //def image = docker.image("${tag}:sonarqube")
 
-              def sonarScannerImage = docker.image("emeraldsquad/sonar-scanner")
+              def sonarScannerImage = docker.image("newtmitch/sonar-scanner")
               sonarScannerImage.inside {
                 withSonarQubeEnv('SonarQubeServer') { // If you have configured more than one global server connection, you can specify its name
-                  sh "pwd; ls -l"
+                  sh "pwd; ls -l; echo \$SONARQUBE_SCANNER_PARAMS"
                   sh "sonar-scanner || echo 'Snoar scanner failed';"
                   sh "mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.6.0.1398:sonar || echo 'Snoar scanner failed again';"
                 }
