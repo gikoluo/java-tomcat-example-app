@@ -115,6 +115,10 @@ spec:
               //docker run -ti -v $(pwd):/root/src --entrypoint='' newtmitch/sonar-scanner sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 -X
               def image = docker.image("nikhuber/sonar-scanner:latest") {
                 sh "sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';"
+
+                withSonarQubeEnv('SonarQubeServer') {
+                  sh 'mvn package sonar:sonar'
+                }
               }
               //def scannerHome = tool 'SonarScanner 4.0';
               // image.inside {
