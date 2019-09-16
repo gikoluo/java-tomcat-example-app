@@ -42,11 +42,6 @@ spec:
     volumeMounts:
       - mountPath: /var/run/docker.sock
         name: docker-sock
-  - name: maven
-    image: maven:3-jdk-8
-    command:
-    - cat
-    tty: true
   - name: kubectl
     image: lachlanevenson/k8s-kubectl:v1.14.6
     command:
@@ -117,7 +112,7 @@ spec:
           echo "Run Sonar Analytics"
           script {
             if(! skipQA) {
-              def image = docker.build("${tag}:sonarqube", "--target sonarqube")
+              def image = docker.build("${tag}:sonarqube", "--target sonarqube .")
 
               // image.inside {
               //     sh 'make test'
