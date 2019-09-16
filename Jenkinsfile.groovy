@@ -116,22 +116,22 @@ spec:
         container('docker') {
           echo "Run Sonar Analytics"
 
-          if(! skipQA) {
-            sh """
-            docker build --target sonarqube -t ${tag}:sonarqube .
-            docker push ${tag}:sonarqube
-            """
-
             script {
+            if(! skipQA) {
+              sh """
+              docker build --target sonarqube -t ${tag}:sonarqube .
+              docker push ${tag}:sonarqube
+              """
               def image = docker.image("${tag}:sonarqube")
               image.inside("--link devops-sonarqube-sonarqube:sonarqube") {
                 sh "sonar-scanner || echo 'Snoar scanner failed' "
               }
             }
+            else {
+              echo "Skipped QA."
+            }
           }
-          else {
-            echo "Skipped."
-          }
+          
           
         }
       }
