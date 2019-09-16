@@ -134,10 +134,11 @@ spec:
               def image = docker.build("${tag}:sonarqube", "--target build_stage .")
               image.inside {  //docker inside changed the workdir to project home. so cd /build is required
                 sh "pwd"
-                sh """
-                cat sonar-project.properties;
-                sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';
-                """
+                sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.6.0.1398:sonar -Dsonar.host.url=http://docker.for.mac.host.internal:9000'
+                //sh """
+                //cat sonar-project.properties;
+                //sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';
+                //"""
               }
             }
             else {
