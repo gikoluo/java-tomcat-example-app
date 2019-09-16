@@ -122,10 +122,11 @@ spec:
               docker push ${tag}:sonarqube
               """
               def image = docker.image("${tag}:sonarqube")
-              image.inside() {
-                // sh "curl http://docker.for.mac.host.internal:9000/ || echo curl devops-sonarqube-sonarqube"
-                // sh "curl http://sonarqube:9000/ || echo curl sonarqube"
-                // sh "curl http://devops-sonarqube-sonarqube.devops.svc.cluster.local:9000/ || echo curl sonarqube"
+              image.inside {
+                sh "curl http://docker.for.mac.host.internal:9000/ || echo curl devops-sonarqube-sonarqube"
+                sh "curl http://sonarqube:9000/ || echo curl sonarqube"
+                sh "curl http://devops-sonarqube-sonarqube.devops.svc.cluster.local:9000/ || echo curl sonarqube"
+                
                 sh "pwd"
                 sh "cat sonar-project.properties"
                 sh "sonar-scanner || echo 'Snoar scanner failed' "
