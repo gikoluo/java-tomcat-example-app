@@ -122,14 +122,14 @@ spec:
               docker push ${tag}:sonarqube
               """
               def image = docker.image("${tag}:sonarqube")
-              image.inside {
+              image.inside {  //docker inside changed the workdir to project home. so cd /build is required
                 sh "curl http://docker.for.mac.host.internal:9000/ || echo curl devops-sonarqube-sonarqube"
                 sh "curl http://sonarqube:9000/ || echo curl sonarqube"
                 sh "curl http://devops-sonarqube-sonarqube.devops.svc.cluster.local:9000/ || echo curl sonarqube"
-                sh "cd /build/"
-                sh "pwd"
-                sh "cat sonar-project.properties"
-                sh "sonar-scanner || echo 'Snoar scanner failed' "
+                sh """cd /build/;
+                cat sonar-project.properties;
+                sonar-scanner || echo 'Snoar scanner failed';
+                """
               }
             }
             else {
