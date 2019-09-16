@@ -126,12 +126,12 @@ spec:
               // docker build --target sonarqube -t ${tag}:sonarqube .
               // docker push ${tag}:sonarqube
               // """
-              def image = docker.build("${tag}:sonarqube", "--target build_stage .")
-              image.inside {  //docker inside changed the workdir to project home. so cd /build is required
-                sh "pwd"
+              withSonarQubeEnv('SonarQubeServer') { // If you have configured more than one global server connection, you can specify its name
+                def image = docker.build("${tag}:sonarqube", "--target build_stage .")
+                image.inside {  //docker inside changed the workdir to project home. so cd /build is required
+                  sh "pwd"
                 
-                withSonarQubeEnv('SonarQubeServer') { // If you have configured more than one global server connection, you can specify its name
-                  sh 'mvn package sonar:sonar'
+                  sh 'mvn package sonar:sonar -Dsonar.host.url=http://docker.for.mac.host.internal:9000'
                   //sh "${scannerHome}/bin/sonar-scanner"
                   // withMaven(maven:'Maven 3.6') {
                   //       sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.6.0.1398:sonar -Dsonar.host.url=http://docker.for.mac.host.internal:9000'
