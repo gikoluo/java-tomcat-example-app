@@ -117,11 +117,17 @@ spec:
           echo "Run Sonar Analytics"
           script {
             if(! skipQA) {
-              sh """
-              docker build --target sonarqube -t ${tag}:sonarqube .
-              docker push ${tag}:sonarqube
-              """
-              def image = docker.image("${tag}:sonarqube")
+              def image = docker.build("${tag}:sonarqube", "--target sonarqube")
+
+              // image.inside {
+              //     sh 'make test'
+              // }
+
+              // sh """
+              // docker build --target sonarqube -t ${tag}:sonarqube .
+              // docker push ${tag}:sonarqube
+              // """
+              // def image = docker.image("${tag}:sonarqube")
               image.inside('--entrypoint "" -Dsonar.host.url=http://docker.for.mac.host.internal:9000') {  //docker inside changed the workdir to project home. so cd /build is required
                 sh "curl http://docker.for.mac.host.internal:9000/ || echo curl devops-sonarqube-sonarqube"
                 sh "curl http://sonarqube:9000/ || echo curl sonarqube"
