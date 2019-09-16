@@ -14,7 +14,7 @@ RUN mvn compile war:war
 FROM nikhuber/sonar-scanner:latest as sonarqube
 WORKDIR /build
 COPY --from=build_stage /build/src /build
-RUN echo sonar.host.url=http://devops-sonarqube-sonarqube:9000 >> /opt/sonar-scanner-3.2.0.1227-linux/conf/sonar-scanner.properties && \
+RUN echo sonar.host.url=http://sonarqube:9000 >> /opt/sonar-scanner-3.2.0.1227-linux/conf/sonar-scanner.properties && \
     echo "sonar.projectKey=sample:tomcat" > sonar-project.properties && echo "sonar.sources=./src" >> sonar-project.properties
 CMD ["sonar-scanner"]
 
