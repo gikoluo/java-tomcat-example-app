@@ -117,15 +117,16 @@ spec:
           echo "Run SonarQube Analysis"
           script {
             if(! skipQA) {
-              
-              withSonarQubeEnv('SonarQubeServer') { // If you have configured more than one global server connection, you can specify its name
                 //sh "${scannerHome}/bin/sonar-scanner"
                 //sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.6.0.1398:sonar'
                 //def image = docker.image("${tag}:sonarqube")
 
-                def image = docker.image("newtmitch/sonar-scanner:4").withRun(){
-                  sh "sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';"
-                  sh "mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.6.0.1398:sonar || echo 'Snoar scanner failed again';"
+                def sonarScannerImage = docker.image("newtmitch/sonar-scanner:4")
+                sonarScannerImage.inside {
+                  withSonarQubeEnv('SonarQubeServer') { // If you have configured more than one global server connection, you can specify its name
+                    sh "sonar-scanner || echo 'Snoar scanner failed';"
+                    sh "mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.6.0.1398:sonar || echo 'Snoar scanner failed again';"
+                  }
                 }
 
               }
