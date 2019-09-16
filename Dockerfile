@@ -11,7 +11,7 @@ RUN mvn compile war:war
 
 # Step 2: Run Sonarqube scan
 # Gets Sonarqube Scanner from Dockerhub and runs it
-FROM nikhuber/sonar-scanner:latest as sonarqube
+FROM newtmitch/sonar-scanner:4 as sonarqube
 WORKDIR /build
 COPY --from=build_stage /build/src /build/src
 RUN echo sonar.host.url=http://docker.for.mac.host.internal:9000 >> /opt/sonar-scanner-3.2.0.1227-linux/conf/sonar-scanner.properties && \
