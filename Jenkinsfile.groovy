@@ -4,6 +4,7 @@
 def projectName = env.PROJECT_NAME   //Project name, Usually it is the name of jenkins project folder name.
 def serviceName = env.SERVICE_NAME   //Service name. Usually it is the process name running in the server.
 def archiveFile = env.ARCHIVE_FILE
+def skipQA = env.SKIP_QA
 //def branchName = env.BRANCH_NAME     //Branch name. And the project must be multibranch pipeline, Or set the env in config
 def branchName
 def hubCredential=env.HUB_CREDENTIAL
@@ -115,16 +116,23 @@ spec:
         container('docker') {
           echo "Run Sonar Analytics"
 
-          sh """
-            docker build --target sonarqube -t ${tag}:sonarqube . 
+          if(! skipQA) {
+            sh """
+            docker build --target sonarqube -t ${tag}:sonarqube .
+            docker push ${tag}:sonarqube
             """
 
-          script {
-            def image = docker.image("${tag}:sonarqube")
-            image.inside("--link devops-sonarqube-sonarqube:sonarqube") {
-              sh "sonar-scanner || echo 'Snoar scanner failed' "
+            script {
+              def image = docker.image("${tag}:sonarqube")
+              image.inside("--link devops-sonarqube-sonarqube:sonarqube") {
+                sh "sonar-scanner || echo 'Snoar scanner failed' "
+              }
             }
           }
+          else {
+            echo "Skipped."
+          }
+          
         }
       }
     }
