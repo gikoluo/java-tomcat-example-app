@@ -108,20 +108,20 @@ spec:
 
     stage('SonarQube analysis') {
       steps {
-        //container('docker') {
+        container('docker') {
           echo "Run SonarQube Analysis"
           script {
             if(! skipQA) {
               // def image = docker.image("newtmitch/sonar-scanner:4").withRun(){
               //   sh "sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';"
               // }
-              def scannerHome = tool 'SonarScanner 4.0';
-              withSonarQubeEnv('SonarQubeServer') { // If you have configured more than one global server connection, you can specify its name
-                //sh "${scannerHome}/bin/sonar-scanner"
-                withMaven(maven:'Maven 3.6') {
-                      sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.6.0.1398:sonar'
-                  }
-              }
+              // def scannerHome = tool 'SonarScanner 4.0';
+              // withSonarQubeEnv('SonarQubeServer') { // If you have configured more than one global server connection, you can specify its name
+              //   //sh "${scannerHome}/bin/sonar-scanner"
+              //   withMaven(maven:'Maven 3.6') {
+              //         sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.6.0.1398:sonar -Dsonar.host.url=http://docker.for.mac.host.internal:9000'
+              //     }
+              // }
 
               // image.inside {
               //     sh 'make test'
@@ -131,20 +131,20 @@ spec:
               // docker build --target sonarqube -t ${tag}:sonarqube .
               // docker push ${tag}:sonarqube
               // """
-              // def image = docker.image("${tag}:sonarqube")
-              // image.inside("--entrypoint=''") {  //docker inside changed the workdir to project home. so cd /build is required
-              //   sh "pwd"
-              //   sh """
-              //   cat sonar-project.properties;
-              //   sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';
-              //   """
-              // }
+              def image = docker.build("${tag}:sonarqube", "--target build_stage .")
+              image.inside {  //docker inside changed the workdir to project home. so cd /build is required
+                sh "pwd"
+                sh """
+                cat sonar-project.properties;
+                sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';
+                """
+              }
             }
             else {
               echo "Skipped QA."
             }
           }
-        //}
+        }
       }
     }
 
