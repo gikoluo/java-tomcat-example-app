@@ -121,8 +121,8 @@ spec:
 
           script {
             def image = docker.image("${tag}:sonarqube")
-            image.inside {
-              sh "sonar-scanner"
+            image.inside("--link devops-sonarqube-sonarqube:sonarqube") {
+              sh "sonar-scanner || echo 'Snoar scanner failed' "
             }
           }
         }
