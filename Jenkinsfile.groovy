@@ -119,6 +119,7 @@ spec:
                 //sh "sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';"
 
                 withSonarQubeEnv('SonarQubeServer') {
+                  sh 'echo $SONARQUBE_SCANNER_PARAMS'
                   sh 'mvn package sonar:sonar'
                 }
               }
