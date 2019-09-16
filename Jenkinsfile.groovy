@@ -16,6 +16,7 @@ def imageName
 def version 
 def tag
 def archiveFlatName 
+def versionImage
 
 pipeline {
   agent {
@@ -95,7 +96,7 @@ spec:
       steps {
         container('docker') {
           script {
-            def versionImage = docker.build("${tag}:${version}")
+            versionImage = docker.build("${tag}:${version}")
           }
           // sh """
           //   docker build -t ${tag}:${version} . && \
@@ -111,7 +112,9 @@ spec:
           echo "Run Sonar Analytics"
           script {
             if(! skipQA) {
-              def image = docker.build("${tag}:sonarqube", "--target sonarqube .")
+              def image = docker.image("newtmitch/sonar-scanner").withRun(){
+                sh "sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';"
+              }
 
               // image.inside {
               //     sh 'make test'
@@ -122,13 +125,13 @@ spec:
               // docker push ${tag}:sonarqube
               // """
               // def image = docker.image("${tag}:sonarqube")
-              image.inside("--entrypoint=''") {  //docker inside changed the workdir to project home. so cd /build is required
-                sh "pwd"
-                sh """
-                cat sonar-project.properties;
-                sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';
-                """
-              }
+              // image.inside("--entrypoint=''") {  //docker inside changed the workdir to project home. so cd /build is required
+              //   sh "pwd"
+              //   sh """
+              //   cat sonar-project.properties;
+              //   sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';
+              //   """
+              // }
             }
             else {
               echo "Skipped QA."
