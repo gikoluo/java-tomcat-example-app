@@ -112,8 +112,12 @@ spec:
           echo "Run Sonar Analytics"
           script {
             if(! skipQA) {
-              def image = docker.image("newtmitch/sonar-scanner").withRun(){
-                sh "sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';"
+              // def image = docker.image("newtmitch/sonar-scanner:4").withRun(){
+              //   sh "sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';"
+              // }
+              def scannerHome = tool 'SonarScanner 4.0';
+              withSonarQubeEnv('SonarQubeServer') { // If you have configured more than one global server connection, you can specify its name
+                sh "${scannerHome}/bin/sonar-scanner"
               }
 
               // image.inside {
@@ -205,7 +209,7 @@ spec:
         container('docker') {
           sh """
               docker tag ${tag}:uat ${tag}:prod
-              docker push ${tag_prod}:prod
+              docker push ${tag}:prod
               """
           // withCredentials([[$class: 'UsernamePasswordMultiBinding',
           //   credentialsId: "${hubCredential}",
