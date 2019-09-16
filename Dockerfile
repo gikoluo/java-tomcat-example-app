@@ -13,7 +13,7 @@ RUN mvn compile war:war
 # Gets Sonarqube Scanner from Dockerhub and runs it
 FROM nikhuber/sonar-scanner:latest as sonarqube
 WORKDIR /build
-COPY --from=build_stage /build/src /build
+COPY --from=build_stage /build/src /build/src
 RUN echo sonar.host.url=http://docker.for.mac.host.internal:9000 >> /opt/sonar-scanner-3.2.0.1227-linux/conf/sonar-scanner.properties && \
     echo "sonar.projectKey=sample:tomcat" > sonar-project.properties && echo "sonar.sources=./src" >> sonar-project.properties
 CMD ["sonar-scanner"]
