@@ -123,7 +123,8 @@ spec:
               """
               def image = docker.image("${tag}:sonarqube")
               image.inside("--link devops-sonarqube-sonarqube:sonarqube") {
-                sh "curl http://devops-sonarqube-sonarqube:9000/ || echo curl"
+                sh "curl http://devops-sonarqube-sonarqube:9000/ || echo curl devops-sonarqube-sonarqube"
+                sh "curl http://sonarqube:9000/ || echo curl sonarqube"
                 sh "sonar-scanner || echo 'Snoar scanner failed' "
               }
             }
