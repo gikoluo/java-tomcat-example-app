@@ -95,8 +95,7 @@ spec:
       steps {
         container('docker') {
           script {
-            def customImage = docker.build("${tag}:${version}")
-            customImage.push()
+            def versionImage = docker.build("${tag}:${version}")
           }
           // sh """
           //   docker build -t ${tag}:${version} . && \
@@ -123,14 +122,14 @@ spec:
               // docker push ${tag}:sonarqube
               // """
               // def image = docker.image("${tag}:sonarqube")
-              image.inside('--entrypoint "" -Dsonar.host.url=http://docker.for.mac.host.internal:9000') {  //docker inside changed the workdir to project home. so cd /build is required
+              image.inside('--entrypoint ""') {  //docker inside changed the workdir to project home. so cd /build is required
                 sh "curl http://docker.for.mac.host.internal:9000/ || echo curl devops-sonarqube-sonarqube"
                 sh "curl http://sonarqube:9000/ || echo curl sonarqube"
                 sh "curl http://devops-sonarqube-sonarqube.devops.svc.cluster.local:9000/ || echo curl sonarqube"
                 sh "pwd"
                 sh """cd /build/;
                 cat sonar-project.properties;
-                sonar-scanner || echo 'Snoar scanner failed';
+                sonar-scanner -Dsonar.host.url=http://docker.for.mac.host.internal:9000 || echo 'Snoar scanner failed';
                 """
               }
             }
@@ -148,15 +147,18 @@ spec:
           echo "Extract the Archive File : ${archiveFile} to ${archiveFlatName}"
 
           script {
-            def image = docker.image("${tag}:${version}")
-            image.inside {
+            //def image = docker.image("${tag}:${version}")
+            versionImage.inside {
               sh "cp ${archiveFile} ${WORKSPACE}/${archiveFlatName}"
               archiveArtifacts "${archiveFlatName}"
             }
+            versionImage.push()
           }
         }
       }
     }
+
+    
 
     stage('Deploy To UAT') {
       steps {
